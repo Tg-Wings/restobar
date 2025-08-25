@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 
 interface LoadingScreenProps {
   onComplete: () => void
@@ -10,13 +10,39 @@ export function LoadingScreen({ onComplete }: LoadingScreenProps) {
   const [progress, setProgress] = useState(0)
   const [isVideoLoaded, setIsVideoLoaded] = useState(false)
   const [fadeOut, setFadeOut] = useState(false)
+  const [videoError, setVideoError] = useState(false)
+  const videoRef = useRef<HTMLVideoElement>(null)
 
   useEffect(() => {
     setIsVideoLoaded(true)
 
-    const totalDuration = 10000 // 10 segundos en milisegundos
-    const intervalTime = 100 // Actualizar cada 100ms para suavidad
-    const incrementPerInterval = 100 / (totalDuration / intervalTime) // Incremento por intervalo
+    const playVideo = async () => {
+      if (videoRef.current) {
+        try {
+          videoRef.current.load()
+          await videoRef.current.play()
+          console.log("[v0] Video playing successfully")
+        } catch (error) {
+          console.log("[v0] Video autoplay failed:", error)
+          setTimeout(async () => {
+            try {
+              if (videoRef.current) {
+                await videoRef.current.play()
+                console.log("[v0] Video playing on retry")
+              }
+            } catch (retryError) {
+              console.log("[v0] Video retry failed, keeping video visible")
+            }
+          }, 500)
+        }
+      }
+    }
+
+    const videoTimeout = setTimeout(playVideo, 50)
+
+    const totalDuration = 10000
+    const intervalTime = 100
+    const incrementPerInterval = 100 / (totalDuration / intervalTime)
 
     const interval = setInterval(() => {
       setProgress((prev) => {
@@ -36,8 +62,25 @@ export function LoadingScreen({ onComplete }: LoadingScreenProps) {
 
     return () => {
       clearInterval(interval)
+      clearTimeout(videoTimeout)
     }
   }, [onComplete])
+
+  const handleCanPlay = () => {
+    if (videoRef.current) {
+      videoRef.current.play().catch((error) => {
+        console.log("[v0] CanPlay video failed:", error)
+      })
+    }
+  }
+
+  const handleLoadedData = () => {
+    if (videoRef.current) {
+      videoRef.current.play().catch((error) => {
+        console.log("[v0] LoadedData video failed:", error)
+      })
+    }
+  }
 
   return (
     <div
@@ -46,14 +89,21 @@ export function LoadingScreen({ onComplete }: LoadingScreenProps) {
       }`}
     >
       <video
+        ref={videoRef}
         className="absolute inset-0 w-full h-full object-cover"
         autoPlay
         muted
         loop
         playsInline
+        webkit-playsinline="true"
         disablePictureInPicture
         controlsList="nodownload nofullscreen noremoteplaybook"
         preload="auto"
+        onCanPlay={handleCanPlay}
+        onLoadedData={handleLoadedData}
+        onError={(e) => {
+          console.log("[v0] Video error:", e)
+        }}
         style={{
           pointerEvents: "none",
           minWidth: "100%",
@@ -66,7 +116,6 @@ export function LoadingScreen({ onComplete }: LoadingScreenProps) {
       <div className="absolute inset-0 bg-black/40" />
 
       <div className="relative z-10 flex flex-col items-center space-y-12 px-6 text-center">
-        {/* Título minimalista */}
         <div className="space-y-6">
           <h1 className="text-white text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-light tracking-[0.2em] drop-shadow-2xl">
             RESTOBAR
@@ -104,6 +153,14 @@ export function LoadingScreen({ onComplete }: LoadingScreenProps) {
           ))}
         </div>
       </div>
+
+      <style jsx>{`
+        @keyframes gradientShift {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+      `}</style>
     </div>
   )
 }
