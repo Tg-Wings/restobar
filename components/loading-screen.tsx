@@ -88,6 +88,30 @@ export function LoadingScreen({ onComplete }: LoadingScreenProps) {
         fadeOut ? "opacity-0 scale-105" : "opacity-100 scale-100"
       }`}
     >
+      <style jsx>{`
+        video::-webkit-media-controls {
+          display: none !important;
+        }
+        video::-webkit-media-controls-panel {
+          display: none !important;
+        }
+        video::-webkit-media-controls-play-button {
+          display: none !important;
+        }
+        video::-webkit-media-controls-start-playback-button {
+          display: none !important;
+        }
+        video::-moz-media-controls {
+          display: none !important;
+        }
+        video::-ms-media-controls {
+          display: none !important;
+        }
+        video {
+          outline: none !important;
+        }
+      `}</style>
+
       <video
         ref={videoRef}
         className="absolute inset-0 w-full h-full object-cover"
@@ -98,6 +122,7 @@ export function LoadingScreen({ onComplete }: LoadingScreenProps) {
         webkit-playsinline="true"
         disablePictureInPicture
         controlsList="nodownload nofullscreen noremoteplaybook"
+        controls={false}
         preload="auto"
         onCanPlay={handleCanPlay}
         onLoadedData={handleLoadedData}
