@@ -11,13 +11,21 @@ export function LoadingScreen({ onComplete }: LoadingScreenProps) {
   const [isVideoLoaded, setIsVideoLoaded] = useState(false)
   const [fadeOut, setFadeOut] = useState(false)
   const [videoError, setVideoError] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
 
   useEffect(() => {
+    const checkMobile = () => {
+      const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera
+      const mobileRegex = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i
+      return mobileRegex.test(userAgent.toLowerCase()) || window.innerWidth <= 768
+    }
+
+    setIsMobile(checkMobile())
     setIsVideoLoaded(true)
 
     const playVideo = async () => {
-      if (videoRef.current) {
+      if (videoRef.current && !checkMobile()) {
         try {
           videoRef.current.load()
           await videoRef.current.play()
@@ -87,6 +95,9 @@ export function LoadingScreen({ onComplete }: LoadingScreenProps) {
       className={`fixed inset-0 z-50 flex flex-col items-center justify-center transition-all duration-800 ${
         fadeOut ? "opacity-0 scale-105" : "opacity-100 scale-100"
       }`}
+      style={{
+        backgroundColor: isMobile ? "#000000" : "transparent",
+      }}
     >
       <style jsx>{`
         video::-webkit-media-controls {
@@ -112,33 +123,35 @@ export function LoadingScreen({ onComplete }: LoadingScreenProps) {
         }
       `}</style>
 
-      <video
-        ref={videoRef}
-        className="absolute inset-0 w-full h-full object-cover"
-        autoPlay
-        muted
-        loop
-        playsInline
-        webkit-playsinline="true"
-        disablePictureInPicture
-        controlsList="nodownload nofullscreen noremoteplaybook"
-        controls={false}
-        preload="auto"
-        onCanPlay={handleCanPlay}
-        onLoadedData={handleLoadedData}
-        onError={(e) => {
-          console.log("[v0] Video error:", e)
-        }}
-        style={{
-          pointerEvents: "none",
-          minWidth: "100%",
-          minHeight: "100%",
-        }}
-      >
-        <source src="/restobar.mp4" type="video/mp4" />
-      </video>
+      {!isMobile && (
+        <video
+          ref={videoRef}
+          className="absolute inset-0 w-full h-full object-cover"
+          autoPlay
+          muted
+          loop
+          playsInline
+          webkit-playsinline="true"
+          disablePictureInPicture
+          controlsList="nodownload nofullscreen noremoteplaybook"
+          controls={false}
+          preload="auto"
+          onCanPlay={handleCanPlay}
+          onLoadedData={handleLoadedData}
+          onError={(e) => {
+            console.log("[v0] Video error:", e)
+          }}
+          style={{
+            pointerEvents: "none",
+            minWidth: "100%",
+            minHeight: "100%",
+          }}
+        >
+          <source src="/restobar.mp4" type="video/mp4" />
+        </video>
+      )}
 
-      <div className="absolute inset-0 bg-black/40" />
+      <div className={`absolute inset-0 ${isMobile ? "bg-black/20" : "bg-black/40"}`} />
 
       <div className="relative z-10 flex flex-col items-center space-y-12 px-6 text-center">
         <div className="space-y-6">
